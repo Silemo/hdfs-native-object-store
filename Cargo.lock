@@ -462,7 +462,6 @@ checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 [[package]]
 name = "hdfs-native"
 version = "0.10.0"
-source = "git+https://github.com/Silemo/hdfs-native#1d416ce786b62910c77066ed34ea1b42e3af8e72"
 dependencies = [
  "aes",
  "base64",
