@@ -15,7 +15,7 @@ async-trait = "0.1"
 bytes = "1"
 chrono = "0.4"
 futures = "0.3"
-hdfs-native = { path  = "../hdfs-native/rust"}
+hdfs-native = { git = "https://github.com/Silemo/hdfs-native" }
 object_store = "0.10"
 thiserror = "1"
 tokio = { version = "1", features = ["rt", "net", "io-util", "macros", "sync", "time"] }
