@@ -57,7 +57,7 @@ impl HdfsObjectStore {
     /// let store = HdfsObjectStore::new(Arc::new(client));
     /// ```
     pub fn new(client: Arc<Client>) -> Self {
-        print!("DBG: HDFS-NATIVE - new() \n");
+        print!("DBG: HDFS-NATIVE-OBJECT-STORE - new() \n");
         Self { client }
     }
 
