@@ -19,7 +19,6 @@ use std::{
     path::PathBuf,
     sync::Arc,
 };
-use log::debug;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -58,7 +57,6 @@ impl HdfsObjectStore {
     /// let store = HdfsObjectStore::new(Arc::new(client));
     /// ```
     pub fn new(client: Arc<Client>) -> Self {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - new() \n");
         Self { client }
     }
 
@@ -82,7 +80,6 @@ impl HdfsObjectStore {
     /// # }
     /// ```
     pub fn with_url(url: &str) -> Result<Self> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - with_url()");
         Ok(Self::new(Arc::new(Client::new(url).to_object_store_err()?)))
     }
 
@@ -103,14 +100,12 @@ impl HdfsObjectStore {
     /// # }
     /// ```
     pub fn with_config(url: &str, config: HashMap<String, String>) -> Result<Self> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - with_config() \n");
         Ok(Self::new(Arc::new(
             Client::new_with_config(url, config).to_object_store_err()?,
         )))
     }
 
     async fn internal_copy(&self, from: &Path, to: &Path, overwrite: bool) -> Result<()> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - internal_copy() \n");
         let overwrite = match self.client.get_file_info(&make_absolute_file(to)).await {
             Ok(_) if overwrite => true,
             Ok(_) => Err(HdfsError::AlreadyExists(make_absolute_file(to))).to_object_store_err()?,
@@ -145,7 +140,6 @@ impl HdfsObjectStore {
     }
 
     async fn open_tmp_file(&self, file_path: &str) -> Result<(FileWriter, String)> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - open_tmp_file() \n");
         let path_buf = PathBuf::from(file_path);
 
         let file_name = path_buf
@@ -202,7 +196,6 @@ impl ObjectStore for HdfsObjectStore {
         payload: PutPayload,
         opts: PutOptions,
     ) -> Result<PutResult> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - put_opts() \n");
         let overwrite = match opts.mode {
             PutMode::Create => false,
             PutMode::Overwrite => true,
@@ -247,7 +240,6 @@ impl ObjectStore for HdfsObjectStore {
         location: &Path,
         _opts: PutMultipartOpts,
     ) -> Result<Box<dyn MultipartUpload>> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - put_multipart_opts() \n");
         let final_file_path = make_absolute_file(location);
 
         let (tmp_file, tmp_file_path) = self.open_tmp_file(&final_file_path).await?;
@@ -269,7 +261,6 @@ impl ObjectStore for HdfsObjectStore {
         {
             return Err(object_store::Error::NotImplemented);
         }
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - get_opts() \n");
         let meta = self.head(location).await?;
 
         let range = options
@@ -303,7 +294,6 @@ impl ObjectStore for HdfsObjectStore {
 
     /// Return the metadata for the specified location
     async fn head(&self, location: &Path) -> Result<ObjectMeta> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - head() \n");
         let status = self
             .client
             .get_file_info(&make_absolute_file(location))
@@ -322,7 +312,6 @@ impl ObjectStore for HdfsObjectStore {
 
     /// Delete the object at the specified location.
     async fn delete(&self, location: &Path) -> Result<()> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - delete() \n");
         let result = self
             .client
             .delete(&make_absolute_file(location), false)
@@ -346,7 +335,6 @@ impl ObjectStore for HdfsObjectStore {
     ///
     /// Note: the order of returned [`ObjectMeta`] is not guaranteed
     fn list(&self, prefix: Option<&Path>) -> BoxStream<'_, Result<ObjectMeta>> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - list() \n");
         let status_stream = self
             .client
             .list_status_iter(
@@ -375,7 +363,6 @@ impl ObjectStore for HdfsObjectStore {
     /// Prefixes are evaluated on a path segment basis, i.e. `foo/bar/` is a prefix of `foo/bar/x` but not of
     /// `foo/bar_baz/x`.
     async fn list_with_delimiter(&self, prefix: Option<&Path>) -> Result<ListResult> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - list_with_delimiter() \n");
         let mut status_stream = self
             .client
             .list_status_iter(
@@ -415,7 +402,6 @@ impl ObjectStore for HdfsObjectStore {
 
     /// Renames a file. This operation is guaranteed to be atomic.
     async fn rename(&self, from: &Path, to: &Path) -> Result<()> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - rename() \n");
         Ok(self
             .client
             .rename(&make_absolute_file(from), &make_absolute_file(to), true)
@@ -426,7 +412,6 @@ impl ObjectStore for HdfsObjectStore {
     /// Renames a file only if the distination doesn't exist. This operation is guaranteed
     /// to be atomic.
     async fn rename_if_not_exists(&self, from: &Path, to: &Path) -> Result<()> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - rename_if_not_exists() \n");
         Ok(self
             .client
             .rename(&make_absolute_file(from), &make_absolute_file(to), false)
@@ -438,7 +423,6 @@ impl ObjectStore for HdfsObjectStore {
     ///
     /// If there exists an object at the destination, it will be overwritten.
     async fn copy(&self, from: &Path, to: &Path) -> Result<()> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - copy() \n");
         self.internal_copy(from, to, true).await
     }
 
@@ -450,7 +434,6 @@ impl ObjectStore for HdfsObjectStore {
     /// If atomic operations are not supported by the underlying object storage (like S3)
     /// it will return an error.
     async fn copy_if_not_exists(&self, from: &Path, to: &Path) -> Result<()> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - copy_if_not_exists() \n");
         self.internal_copy(from, to, false).await
     }
 }
@@ -467,7 +450,6 @@ trait HdfsErrorConvert<T> {
 
 impl<T> HdfsErrorConvert<T> for hdfs_native::Result<T> {
     fn to_object_store_err(self) -> Result<T> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - to_object_store_err() \n");
         self.map_err(|err| match err {
             HdfsError::FileNotFound(path) => object_store::Error::NotFound {
                 path: path.clone(),
@@ -505,7 +487,6 @@ impl HdfsMultipartWriter {
         tmp_filename: &str,
         final_filename: &str,
     ) -> Self {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - HdfsMultipartWriter new() \n");
         let (sender, receiver) = mpsc::unbounded_channel();
 
         Self {
@@ -520,7 +501,6 @@ impl HdfsMultipartWriter {
         mut writer: FileWriter,
         mut part_receiver: mpsc::UnboundedReceiver<(oneshot::Sender<Result<()>>, PutPayload)>,
     ) -> JoinHandle<Result<()>> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - HdfsMultipartWriter start_writer_task() \n");
         task::spawn(async move {
             'outer: loop {
                 match part_receiver.recv().await {
@@ -568,7 +548,6 @@ impl std::fmt::Debug for HdfsMultipartWriter {
 #[async_trait]
 impl MultipartUpload for HdfsMultipartWriter {
     fn put_part(&mut self, payload: PutPayload) -> UploadPart {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - HdfsMultipartWriter put_part() \n");
         let (result_sender, result_receiver) = oneshot::channel();
 
         if let Some((_, payload_sender)) = self.sender.as_ref() {
@@ -588,7 +567,6 @@ impl MultipartUpload for HdfsMultipartWriter {
     }
 
     async fn complete(&mut self) -> Result<PutResult> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - HdfsMultipartWriter complete() \n");
         // Drop the sender so the task knows no more data is coming
         if let Some((handle, sender)) = self.sender.take() {
             drop(sender);
@@ -613,7 +591,6 @@ impl MultipartUpload for HdfsMultipartWriter {
     }
 
     async fn abort(&mut self) -> Result<()> {
-        debug!("DBG: HDFS-NATIVE-OBJECT-STORE - HdfsMultipartWriter abort() \n");
         // Drop the sender so the task knows no more data is coming
         if let Some((handle, sender)) = self.sender.take() {
             drop(sender);
@@ -637,12 +614,10 @@ impl MultipartUpload for HdfsMultipartWriter {
 
 /// ObjectStore paths always remove the leading slash, so add it back
 fn make_absolute_file(path: &Path) -> String {
-    debug!("DBG: HDFS-NATIVE-OBJECT-STORE - make_absolute_file() \n");
     format!("/{}", path.as_ref())
 }
 
 fn make_absolute_dir(path: &Path) -> String {
-    debug!("DBG: HDFS-NATIVE-OBJECT-STORE - make_absolute_dir() \n");
     if path.parts().count() > 0 {
         format!("/{}/", path.as_ref())
     } else {
@@ -651,7 +626,6 @@ fn make_absolute_dir(path: &Path) -> String {
 }
 
 fn get_object_meta(status: &FileStatus) -> Result<ObjectMeta> {
-    debug!("DBG: HDFS-NATIVE-OBJECT-STORE - get_object_meta() \n");
     Ok(ObjectMeta {
         location: Path::parse(&status.path)?,
         last_modified: DateTime::<Utc>::from_timestamp(status.modification_time as i64, 0).unwrap(),
